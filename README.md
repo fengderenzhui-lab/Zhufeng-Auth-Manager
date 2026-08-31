@@ -437,30 +437,10 @@ if (! verifyResponse($resp, $publicKey)) {
 - 入口：`/{ZF_ADMIN_PATH}/login`（默认 `admin`，生产建议随机化，如 `zf-8k2x9q`；旧路径访问返回 404）
 - 主题：**深色/浅色双主题**（CSS 变量体系，顶栏/登录页切换按钮，`localStorage.zf-theme` 持久化，防 FOUC 首帧内联脚本，Chart.js 双主题自动重绘）
 - 布局：顶栏 + 侧边栏（PHP 数组驱动递归渲染，分组导航、当前页高亮、超管限定项按角色隐藏、移动端折叠）+ 内容区
-- 看板：雷池风格数据看板（4 统计卡 + 授权状态分布柱状图 + 产品授权分布条形图 + 最近审计动态，数据源 `/admin/stats`）
+- 看板：数据看板（4 统计卡 + 授权状态分布柱状图 + 产品授权分布条形图 + 最近审计动态，数据源 `/admin/stats`）
 - 页面：登录、仪表盘、授权码列表/详情、产品、设备、用户（超管）、审计（超管）、设置（超管）、**公钥录入（超管，实时 Base64/32 字节校验）**
 - 设置页：显示当前后台前缀、HMAC 密钥查看/轮换（轮换后前端自动换新签名）、加密状态只读网格（Argon2id/AES-256-GCM/Ed25519/HMAC/HTTPS/HSTS）
 - 前端调用全部管理 API 时自动携带 `Authorization: Bearer` 与防重放头（X-Timestamp/X-Nonce/X-Signature），HMAC secret 与 Token 仅存 `sessionStorage`（等保 H-01：不落 localStorage/cookie），401 自动跳回登录页，页面刷新后由 `/admin/security/hmac-secret` 重新拉取
 - 页面路由均挂在 `auth.web` 中间件组；API 侧审计/设置/用户/公钥等敏感接口由 `role:super_admin` 保护
 
-## 十一、已知边界与后续规划
-- 设备指纹为"软指纹"（CPU/MAC/UUID/磁盘信号），可被克隆，属业界通病；高安全场景可叠加 TPM/硬件绑定（服务端已支持 `signals` 上报强制服务端算指纹，ZF-2026-002）。
-- 雷池人机验证（V1.32 已实现，默认关闭）：开启后 `SafelineMiddleware` 校验雷池注入可信头，未通过返回 403 `SAFELINE_BLOCKED`；开关建议在设置页「运行参数」中维护，或 `.env` 设 `LICENSING_SAFELINE_ENABLED=true`。网关层需把雷池校验结果以 `X-SafeLine-Checked` 头透传（雷池默认注入）。
-
-## 十二、主机层加固建议（等保 ZF-2026-015）
-
-以下为运行主机（Ubuntu 22.04/24.04）层面的推荐加固项，与本项目代码无关但属等保一级必查面：
-
-- **WAF**：建议接入雷池 SafeLine（`https://github.com/chaitin/SafeLine`）反向代理前置，开启 CC 防护与语义分析；应用侧已内置 `SafelineMiddleware`（V1.32，默认关闭），开启后校验雷池注入的可信头，仅需在 `.env` 设 `LICENSING_SAFELINE_ENABLED=true`（或在设置页开启开关）并保证雷池把校验结果写入 `X-SafeLine-Checked`（雷池默认行为，头名可用 `LICENSING_SAFELINE_TRUSTED_HEADER` 自定义）；同时设 `LICENSING_TRUST_PROXIES=true`。
-- **云安全 Agent**：阿里云/腾讯云等开通主机安全（云镜/云盾），开启基线检查、木马查杀、异常登录告警。
-- **SSH 加固**：改非默认端口、禁止 root 密码登录、仅保留密钥登录（`PasswordAuthentication no`）、启用 fail2ban。
-- **系统更新**：`apt update && apt upgrade` 定期执行；仅开放 80/443/SSH 端口，其余一律不放通。
-- **最小账号**：应用使用独立非 root 账号运行（deploy.sh 已创建 `zfapp`），数据库口令 ≥16 位且仅内网可达。
-
-## 十三、监控告警建议（等保 ZF-2026-016）
-
-- **资源监控**：部署 node_exporter + Prometheus + Grafana（或云厂商监控），对 CPU/内存/磁盘/带宽设置阈值告警（磁盘 >80% 预警）。
-- **备份失败 webhook**：`docker/backup.sh` 支持 `BACKUP_WEBHOOK_URL` 告警钩子（支持钉钉/企业微信/Server酱），备份失败或产物校验失败时推送；建议挂到 cron 每日执行并将备份同步至对象存储（OSS/COS/S3，异地容灾）。
-- **审计链每日校验**：cron 每日执行 `php artisan zf:audit-verify`，发现审计哈希链断裂立即告警（防审计日志被篡改）。
-- **证书与密钥**：TLS 证书到期前 30 天提醒（certbot renew 日志监控）；密钥轮换见 4.3 节。
 
