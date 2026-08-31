@@ -1,23 +1,8 @@
----
-AIGC:
-    Label: "1"
-    ContentProducer: 001191440300708461136T1XGW3
-    ProduceID: ab98165fed8b22aad5c08dac48ce7e1a_1e08f588a48111f192a2525400287e28
-    ReservedCode1: juFSRmPEghbiHmTCKHAEdfbmKTfUU8lK/nin3MilKeq8txE/PXyUOQ9EE0Na3l/KyD8hngHGC3bqlK+OZ3bbMrfvl9rS/pSiddbcWA60aJh9pDz1rjrscU0oaOV5zih/+Y6rn5xXP1qNn4LV5y41l8mt65OQr7mawcbwQnxKCs35MgpwEXwTVB2BghU=
-    ContentPropagator: 001191440300708461136T1XGW3
-    PropagateID: ab98165fed8b22aad5c08dac48ce7e1a_1e08f588a48111f192a2525400287e28
-    ReservedCode2: juFSRmPEghbiHmTCKHAEdfbmKTfUU8lK/nin3MilKeq8txE/PXyUOQ9EE0Na3l/KyD8hngHGC3bqlK+OZ3bbMrfvl9rS/pSiddbcWA60aJh9pDz1rjrscU0oaOV5zih/+Y6rn5xXP1qNn4LV5y41l8mt65OQr7mawcbwQnxKCs35MgpwEXwTVB2BghU=
----
-
-
-
 # 逐风授权码管理平台
 
 基于 PHP 8.2+ / Laravel 11 / MySQL 8.0+ 的自托管授权码管理平台，提供**授权码全生命周期**、**一机一码**、**强制在线心跳**、**管理员分级**、**登录安全**、**审计日志**与**接口风控**，遵循等保 2.0 一级安全要求。项目包含**后端 REST API** 与**雷池风格双主题管理后台**（深色/浅色，Laravel Blade + 原生 JS + 本地化 Chart.js，无构建链、无 CDN），支持 **Docker Compose 一键部署**（entrypoint 全自动密钥初始化）。
 
-> 全部源码存放于桌面 `逐风授权码管理平台` 目录。
-
----
+> 
 
 ## 一、技术栈
 
