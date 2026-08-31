@@ -1,0 +1,35 @@
+# 环境与密钥（严禁打入镜像）：.env
+.env.*
+*.pem
+*.key
+# 版权签名守护公钥放行（V1.31 部署链补全）：7 个 .k_*.pub 伪装公钥 + sig_key_*.pub +
+# guard_*.ed25519 必须随源码打入镜像，否则容器内 verifyGuard 找不到公钥文件、签名守护失效。
+!**/.k_*.pub
+!**/sig_key_*.pub
+!**/guard_*.ed25519
+keys/
+certs/
+backups/
+
+# 依赖与构建产物（镜像内自行 composer install --no-dev，锁版安装；等保 ZF-2026-004）
+# 注意：composer.lock 必须随源码打入镜像（锁版安装 + composer audit 依赖漏洞扫描）
+/vendor
+
+# 运行期数据与日志（等保 L-05 修复：收紧镜像残余信息）
+/storage/*
+!/storage/.gitignore
+!/storage/logs/.gitignore
+!/storage/framework/.gitignore
+!/storage/framework/cache/.gitignore
+!/storage/framework/sessions/.gitignore
+!/storage/framework/views/.gitignore
+/storage/*.key
+
+# 测试 / 文档 / IDE / 系统文件（等保 L-05）
+/tests
+.git
+.idea
+.vscode
+.DS_Store
+Thumbs.db
+*.log

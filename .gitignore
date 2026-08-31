@@ -1,0 +1,28 @@
+# Dependencies
+/vendor
+
+# Environment
+/.env
+/.env.backup
+/.env.*.local
+
+# Runtime
+/storage/*.key
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/storage/logs/*.log
+
+# Editor / OS
+/.idea
+/.vscode
+.DS_Store
+Thumbs.db
+
+# Sensitive keys (must never be committed)
+*.pem
+*.key
+
+# Local database & admin credentials (must never be committed)
+/database/*.sqlite*
+/storage/app/init-admin-credentials.txt

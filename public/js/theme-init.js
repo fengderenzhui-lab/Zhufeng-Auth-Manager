@@ -1,0 +1,2 @@
+/* ZF License Management Platform */
+!function(){try{var t=localStorage.getItem("zf-theme");document.documentElement.setAttribute("data-theme","light"===t?"light":"dark")}catch(t){document.documentElement.setAttribute("data-theme","dark")}}();

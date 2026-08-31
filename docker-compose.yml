@@ -1,0 +1,106 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: zhufeng-license-app:1.2.1
+    container_name: zhufeng-license-app
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - APP_ENV=production
+      - DB_HOST=mysql
+      - REDIS_HOST=redis
+    volumes:
+      - ./storage/logs:/var/www/html/storage/logs
+      - ./storage/app:/var/www/html/storage/app
+      - ./keys:/var/www/html/keys:ro
+      # .env 持久卷（目录挂载）：entrypoint 将最终 .env 存入 /var/www/html/env-data/.env，
+      # 容器重建后自动恢复全部密钥，避免"单文件挂载时命名卷首次为空目录"导致 .env 变目录的问题
+      - env-data:/var/www/html/env-data
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f php-fpm > /dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - license-front-net
+      - license-data-net
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: zhufeng-license-nginx
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8000}:80"
+      - "${HTTPS_PORT:-8443}:443"
+    volumes:
+      - ./public:/var/www/html/public
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      # TLS 证书（tls.crt / tls.key），nginx 仅启用 TLSv1.2/1.3
+      - ./certs:/etc/nginx/certs:ro
+    depends_on:
+      app:
+        condition: service_started
+    networks:
+      - license-front-net
+
+  mysql:
+    image: mysql:8.0
+    container_name: zhufeng-license-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-zhufeng_license}
+      MYSQL_USER: ${DB_USERNAME:-zhufeng}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?请在 .env 中配置 DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?请在 .env 中配置 MYSQL_ROOT_PASSWORD}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - license-data-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: zhufeng-license-redis
+    restart: unless-stopped
+    # 等保 M-08 修复：强制 Redis 密码认证（REDIS_PASSWORD 必填，留空容器拒绝启动）
+    command: ["sh", "-c", "test -n \"$$REDIS_PASSWORD\" && exec redis-server --appendonly yes --requirepass \"$$REDIS_PASSWORD\" || { echo 'REDIS_PASSWORD 必填（等保 M-08）'; exit 1; }"]
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?请在 .env 中配置 REDIS_PASSWORD（等保 M-08 强制）}
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - license-data-net
+
+volumes:
+  mysql-data:
+  redis-data:
+  env-data:
+
+# 等保 M-08 修复：网络细分为前端（app/nginx）与数据层（mysql/redis）两个子网，
+# app 双网卡同时接入数据层以访问 mysql/redis，nginx 仅接入前端网络，最小化互访面。
+networks:
+  license-front-net:
+    driver: bridge
+  license-data-net:
+    driver: bridge
