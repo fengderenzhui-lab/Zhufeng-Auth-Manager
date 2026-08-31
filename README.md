@@ -463,5 +463,4 @@ if (! verifyResponse($resp, $publicKey)) {
 - **备份失败 webhook**：`docker/backup.sh` 支持 `BACKUP_WEBHOOK_URL` 告警钩子（支持钉钉/企业微信/Server酱），备份失败或产物校验失败时推送；建议挂到 cron 每日执行并将备份同步至对象存储（OSS/COS/S3，异地容灾）。
 - **审计链每日校验**：cron 每日执行 `php artisan zf:audit-verify`，发现审计哈希链断裂立即告警（防审计日志被篡改）。
 - **证书与密钥**：TLS 证书到期前 30 天提醒（certbot renew 日志监控）；密钥轮换见 4.3 节。
-*（内容由AI生成，仅供参考）*
-*（内容由AI生成，仅供参考）*
+
